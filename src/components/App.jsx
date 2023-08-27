@@ -1,4 +1,4 @@
-import { Component } from 'react';
+import { useEffect, useState } from 'react';
 import { Container } from './Container/Container';
 import { ContactForm } from './ContactForm/ContactForm';
 import { ContactList } from './ContactList/ContactList';
@@ -8,26 +8,41 @@ import { nanoid } from 'nanoid';
 import React from 'react';
 import { Filter } from './Filter/Filter';
 
-export class App extends Component {
-  state = {
-    contacts: [
-      { id: 'id-1', name: 'Rosie Simpson', phone: '459-12-56' },
-      { id: 'id-2', name: 'Hermione Kline', phone: '443-89-12' },
-      { id: 'id-3', name: 'Eden Clements', phone: '645-17-79' },
-      { id: 'id-4', name: 'Annie Copeland', phone: '227-91-26' },
-    ],
-    filter: '',
-  };
+const getContacts = () => {
+  const contacts = localStorage.getItem('contacts');
+  const parsedContacts = JSON.parse(contacts);
 
-  handleAddContact = ({ name, phone }) => {
+  if (parsedContacts !== null) {
+    return JSON.parse(contacts);
+  }
+};
+
+export const App = () => {
+  const phoneContacts = [
+    { id: 'id-1', name: 'Rosie Simpson', phone: '459-12-56' },
+    { id: 'id-2', name: 'Hermione Kline', phone: '443-89-12' },
+    { id: 'id-3', name: 'Eden Clements', phone: '645-17-79' },
+    { id: 'id-4', name: 'Annie Copeland', phone: '227-91-26' },
+  ];
+
+  const [contacts, setContacts] = useState(getContacts || phoneContacts);
+  const [filter, setFilter] = useState('');
+
+  useEffect(() => {
+    localStorage.setItem('contacts', JSON.stringify(contacts));
+  }, [contacts]);
+
+  const handleAddContact = ({ name, phone }) => {
     const newContact = {
       id: nanoid(),
       name: name,
       phone: phone,
     };
 
-    const isContactExists = this.state.contacts.some(
-      contact => contact.name === name || contact.phone === phone
+    const isContactExists = contacts.some(
+      contact =>
+        contact.name.toLowerCase() === name.toLowerCase() ||
+        contact.phone === phone
     );
 
     if (isContactExists) {
@@ -35,35 +50,27 @@ export class App extends Component {
       return;
     }
 
-    this.setState(prevState => ({
-      contacts: [...prevState.contacts, newContact],
-    }));
+    setContacts(prevState => [...prevState, newContact]);
   };
 
-  handleDeleteContact = id => {
-    this.setState(prevState => ({
-      contacts: prevState.contacts.filter(contact => contact.id !== id),
-    }));
-  };
-  handleFilterChange = event => {
-    this.setState({ filter: event.target.value });
+  const handleDeleteContact = id => {
+    setContacts(prevState => prevState.filter(contact => contact.id !== id));
   };
 
-  render() {
-    const { contacts, filter } = this.state;
-    const filteredContacts = contacts.filter(contact =>
-      contact.name.toLowerCase().includes(filter.toLowerCase())
-    );
-    return (
-      <Container>
-        <ContactForm onSubmit={this.handleAddContact} />
-        <h2>Contacts</h2>
-        <Filter value={this.filter} onChange={this.handleFilterChange} />
-        <ContactList
-          contacts={filteredContacts}
-          onDelete={this.handleDeleteContact}
-        />
-      </Container>
-    );
-  }
-}
+  const handleFilterChange = event => {
+    setFilter(event.target.value);
+  };
+
+  const filteredContacts = contacts.filter(contact =>
+    contact.name.toLowerCase().includes(filter.toLowerCase())
+  );
+
+  return (
+    <Container>
+      <ContactForm onSubmit={handleAddContact} />
+      <h2>Contacts</h2>
+      <Filter value={filter} onChange={handleFilterChange} />
+      <ContactList contacts={filteredContacts} onDelete={handleDeleteContact} />
+    </Container>
+  );
+};
