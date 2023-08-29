@@ -21,7 +21,7 @@ const getContacts = () => {
 };
 
 export const App = () => {
-  const [contacts, setContacts] = useState(getContacts || phoneContacts);
+  const [contacts, setContacts] = useState(getContacts);
   const [filter, setFilter] = useState('');
 
   useEffect(() => {
